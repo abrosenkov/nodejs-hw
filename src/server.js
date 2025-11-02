@@ -47,7 +47,7 @@ app.get('/notes', (req, res) => {
 
 // GET /notes/:noteId
 app.get('/notes/:notesId', (req, res) => {
-  const notesId = req.params;
+  const { notesId } = req.params;
   res.status(200).json({ message: `Retrieved note with ID: ${notesId}` });
 });
 

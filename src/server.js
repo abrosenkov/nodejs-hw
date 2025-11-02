@@ -2,10 +2,15 @@ import express from 'express';
 import cors from 'cors';
 import pino from 'pino-http';
 import 'dotenv/config';
+import helmet from 'helmet';
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
 
+// Helmet  Middleware
+app.use(helmet());
+
+// Pino  Middleware
 app.use(
   pino({
     level: 'info',
@@ -23,46 +28,41 @@ app.use(
   }),
 );
 
+// JSON  Middleware
 app.use(express.json());
+
+// CORS  Middleware
 app.use(cors());
 
+// Time log  Middleware
 app.use((req, res, next) => {
   console.log(`Time: ${new Date().toLocaleString()}`);
   next();
 });
 
-app.get('/', (req, res) => {
-  res.status(200).json({ message: 'Hello world!' });
+// GET / notes
+app.get('/notes', (req, res) => {
+  res.status(200).json({ message: 'Retrieved all notes' });
 });
 
-app.get('/users', (req, res) => {
-  res.status(200).json([
-    { id: 1, name: 'Alice' },
-    { id: 2, name: 'Helen' },
-    { id: 3, name: 'Bob' },
-  ]);
+// GET /notes/:noteId
+app.get('/notes/:notesId', (req, res) => {
+  const notesId = req.params;
+  res.status(200).json({ message: `Retrieved note with ID: ${notesId}` });
 });
 
-app.post('/users', (req, res) => {
-  console.log(req.body);
-  res.status(201).json({ message: 'User created' });
+// Test-error
+app.get('/test-error', () => {
+  throw new Error('Simulated server error');
 });
 
-app.get('/users/:userId', (req, res) => {
-  const { userId } = req.params;
-  res.status(200).json([{ id: userId, name: 'Jacob' }]);
-});
-
-app.get('/test-error', (req, res) => {
-  throw new Error('Something went wrong');
-});
-
+// Not found Middleware
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
+// Any errors Middleware
 app.use((err, req, res, next) => {
-  console.error(err);
   const isProd = process.env.NODE_ENV === 'production';
 
   res.status(500).json({

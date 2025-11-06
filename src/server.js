@@ -1,10 +1,12 @@
 import express from 'express';
 import cors from 'cors';
-import pino from 'pino-http';
 import 'dotenv/config';
 import helmet from 'helmet';
 import { connectMongoDB } from './db/connectMongoDB.js';
-import { Note } from './models/note.js';
+import notesRoutes from './routes/notesRoutes.js';
+import { logger } from './middleware/logger.js';
+import { notFoundHandler } from './middleware/notFoundHandler.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -13,22 +15,7 @@ const PORT = process.env.PORT ?? 3000;
 app.use(helmet());
 
 // Pino  Middleware
-app.use(
-  pino({
-    level: 'info',
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-        translateTime: 'HH:MM:ss',
-        ignore: 'pid,hostname',
-        messageFormat:
-          '{req.method} {req.url} {res.statusCode} - {responseTime}ms',
-        hideObject: true,
-      },
-    },
-  }),
-);
+app.use(logger);
 
 // JSON  Middleware
 app.use(express.json());
@@ -42,38 +29,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// GET / notes
-app.get('/notes', async (req, res) => {
-  const notes = await Note.find();
-  res.status(200).json(notes);
-});
-
-// GET /notes/:noteId
-app.get('/notes/:noteId', (req, res) => {
-  const { noteId } = req.params;
-  res.status(200).json({ message: `Retrieved note with ID: ${noteId}` });
-});
-
-// Test-error
-app.get('/test-error', (req, res) => {
-  throw new Error('Simulated server error');
-});
+// Routers Middleware
+app.use(notesRoutes);
 
 // Not found Middleware
-app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
+app.use(notFoundHandler);
 
 // Any errors Middleware
-app.use((err, req, res, next) => {
-  const isProd = process.env.NODE_ENV === 'production';
-
-  res.status(500).json({
-    message: isProd
-      ? 'Something went wrong. Please try again later.'
-      : err.message,
-  });
-});
+app.use(errorHandler);
 
 await connectMongoDB();
 

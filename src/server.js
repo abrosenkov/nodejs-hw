@@ -7,6 +7,7 @@ import notesRoutes from './routes/notesRoutes.js';
 import { logger } from './middleware/logger.js';
 import { notFoundHandler } from './middleware/notFoundHandler.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { errors } from 'celebrate';
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -34,6 +35,9 @@ app.use(notesRoutes);
 
 // Not found Middleware
 app.use(notFoundHandler);
+
+// validation errors
+app.use(errors());
 
 // Any errors Middleware
 app.use(errorHandler);

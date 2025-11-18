@@ -39,7 +39,7 @@ export const getNoteById = async (req, res) => {
 
   const note = await Note.findById(noteId);
   if (!note) {
-    throw createHttpError(404, 'Route not found');
+    throw createHttpError(404, 'Note not found');
   }
   res.status(200).json(note);
 };

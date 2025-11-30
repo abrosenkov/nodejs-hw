@@ -8,6 +8,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import bcrypt from 'bcrypt';
 import { Session } from '../models/session.js';
+import { saveFileToCloudinary } from '../utils/saveFileToCloudinary.js';
 
 export const requestResetEmail = async (req, res) => {
   const { email } = req.body;
@@ -82,6 +83,22 @@ export const resetPassword = async (req, res) => {
   });
 
   res.status(200).json({
-    message: 'Password reset successfully. Please log in again.',
+    message: 'Password reset successfully',
   });
+};
+
+export const updateUserAvatar = async (req, res) => {
+  if (!req.file) {
+    throw createHttpError(400, 'No file');
+  }
+
+  const result = await saveFileToCloudinary(req.file.buffer);
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { avatar: result.secure_url },
+    { new: true },
+  );
+
+  res.status(200).json({ url: user.avatar });
 };
